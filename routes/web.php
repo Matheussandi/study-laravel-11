@@ -1,11 +1,14 @@
 <?php
 
+use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return view('welcome');
 });
+
+Route::get('/users', [UserController::class, 'index'])->name('users.index');
 
 Route::get('/dashboard', function () {
     return view('dashboard');
