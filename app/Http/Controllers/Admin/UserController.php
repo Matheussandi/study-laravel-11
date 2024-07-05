@@ -6,7 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreUserRequest;
 use App\Http\Requests\UpdateUserRequest;
 use App\Models\User;
+
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 
 class UserController extends Controller
 {
@@ -31,8 +34,14 @@ class UserController extends Controller
 
     public function show($id)
     {
-        $user = User::findOrFail($id);
-        return view('users.show', compact('user'));
+        if (!$user = User::find($id)) {
+            return redirect()
+                ->route('users.index')
+                ->with('message', 'User not found.');
+        }
+
+        return view('admin.users.show', compact('user'));
+
     }
 
     public function edit($id)
@@ -67,9 +76,24 @@ class UserController extends Controller
 
     public function destroy($id)
     {
-        $user = User::findOrFail($id);
+        if (Gate::allows('is-admin') === false) {
+            return back()->with('message', 'You are not authorized to delete users.');
+        }
+
+        if (!$user = User::find($id)) {
+            return redirect()
+                ->route('users.index')
+                ->with('message', 'User not found.');
+        }
+
+        if (Auth::user()->id === $user->id) {
+            return back()->with('message', 'You cannot delete yourself.');
+        }
+
         $user->delete();
 
-        return redirect()->route('users.index');
+        return redirect()
+            ->route('users.index')
+            ->with('success', 'User deleted successfully.');
     }
 }
